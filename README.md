@@ -9,7 +9,7 @@ git clone https://github.com/peterpeterparker/icwebworker
 cd icwebworker
 npm ci
 dfx start --background
-dfx depploy
+dfx deploy
 ```
 
 Once deployed, access your canister locally with `http://<canister-id>.localhost:8000/`.
