@@ -1,0 +1,47 @@
+{
+  "canisters": {
+    "icwebworker_backend": {
+      "main": "src/icwebworker_backend/main.mo",
+      "type": "motoko"
+    },
+    "icwebworker_frontend": {
+      "dependencies": [
+        "icwebworker_backend"
+      ],
+      "frontend": {
+        "entrypoint": "src/icwebworker_frontend/src/index.html"
+      },
+      "source": [
+        "src/icwebworker_frontend/assets",
+        "dist/icwebworker_frontend/"
+      ],
+      "type": "assets"
+    },
+    "internet_identity": {
+      "type": "custom",
+      "candid": "internet_identity.did",
+      "wasm": "internet_identity.wasm",
+      "build": "bash -c 'test -f internet_identity.wasm || curl -sSL https://github.com/dfinity/internet-identity/releases/latest/download/internet_identity_dev.wasm -o internet_identity.wasm; test -f internet_identity.did || curl -sSL https://raw.githubusercontent.com/dfinity/internet-identity/main/src/internet_identity/internet_identity.did -o internet_identity.did'",
+      "remote": {
+        "candid": "internet_identity.did",
+        "id": {
+          "ic": "rdmx6-jaaaa-aaaaa-aaadq-cai"
+        }
+      }
+    }
+  },
+  "defaults": {
+    "build": {
+      "args": "",
+      "packtool": ""
+    }
+  },
+  "dfx": "0.11.2",
+  "networks": {
+    "local": {
+      "bind": "127.0.0.1:8000",
+      "type": "ephemeral"
+    }
+  },
+  "version": 1
+}
