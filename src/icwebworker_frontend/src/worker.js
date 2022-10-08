@@ -1,20 +1,10 @@
-import {
-  IdbStorage,
-  KEY_STORAGE_DELEGATION,
-  KEY_STORAGE_KEY,
-} from "@dfinity/auth-client";
-import { isDelegationValid } from "@dfinity/authentication";
-import {
-  DelegationChain,
-  DelegationIdentity,
-  Ed25519KeyIdentity,
-} from "@dfinity/identity";
-import {Actor, HttpAgent} from "@dfinity/agent";
-import { idlFactory } from '../../declarations/icwebworker_backend/icwebworker_backend.did.js';
+import { AuthClient } from "@dfinity/auth-client";
+import { Actor, HttpAgent } from "@dfinity/agent";
+import { idlFactory } from "../../declarations/icwebworker_backend/icwebworker_backend.did.js";
 
 let timer;
 
-self.onmessage = async ({data}) => {
+self.onmessage = async ({ data }) => {
   const { msg } = data;
 
   switch (msg) {
@@ -31,11 +21,22 @@ const stop = () => clearInterval(timer);
 const start = () => (timer = setInterval(call, 5000));
 
 const call = async () => {
-  const identity = await loadIdentity();
+  // Disable idle manager because web worker cannot access the window object / the UI
+  const authClient = await AuthClient.create({
+    idleOptions: {
+      disableIdle: true,
+      disableDefaultIdleCallback: true,
+    },
+  });
 
-  if (!identity) {
+  const isAuthenticated = await authClient.isAuthenticated();
+
+  if (!isAuthenticated) {
+    // User is not authenticated
     return;
   }
+
+  const identity = authClient.getIdentity();
 
   await query({ identity });
 };
@@ -46,34 +47,7 @@ const query = async ({ identity }) => {
   });
   const greeting = await actor.greet();
 
-  postMessage({msg: 'result', greeting});
-};
-
-const loadIdentity = async () => {
-  const idbStorage = new IdbStorage();
-  const [delegationChain, identityKey] = await Promise.all([
-    idbStorage.get(KEY_STORAGE_DELEGATION),
-    idbStorage.get(KEY_STORAGE_KEY),
-  ]);
-
-  // No identity key or delegation key for the worker found.
-  // User has not signed in.
-  if (!identityKey || !delegationChain) {
-    return undefined;
-  }
-
-  if (!isDelegationValid(DelegationChain.fromJSON(delegationChain))) {
-    throw new Error("Internet identity has expired. Please login again.");
-  }
-
-  const initIdentity = ({ identityKey, delegationChain }) => {
-    const chain = DelegationChain.fromJSON(delegationChain);
-    const key = Ed25519KeyIdentity.fromJSON(identityKey);
-
-    return DelegationIdentity.fromDelegation(key, chain);
-  };
-
-  return initIdentity({ identityKey, delegationChain });
+  postMessage({ msg: "result", greeting });
 };
 
 // Copied from auto-generated ../../declarations/icwebworker_backend/icwebworker_backend.did.js
@@ -89,8 +63,10 @@ export const createActor = (canisterId, options) => {
 
   // Fetch root key for certificate validation during development
   if (process.env.NODE_ENV !== "production") {
-    agent.fetchRootKey().catch(err => {
-      console.warn("Unable to fetch root key. Check to ensure that your local replica is running");
+    agent.fetchRootKey().catch((err) => {
+      console.warn(
+        "Unable to fetch root key. Check to ensure that your local replica is running"
+      );
       console.error(err);
     });
   }
