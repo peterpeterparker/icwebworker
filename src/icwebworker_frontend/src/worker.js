@@ -18,7 +18,7 @@ self.onmessage = async ({ data }) => {
 
 const stop = () => clearInterval(timer);
 
-const start = () => (timer = setInterval(call, 5000));
+const start = () => (timer = setInterval(call, 2000));
 
 const call = async () => {
   // Disable idle manager because web worker cannot access the window object / the UI
