@@ -43,7 +43,7 @@ const call = async () => {
 
 const query = async ({ identity }) => {
   const actor = createActor(canisterId, {
-    agentOptions: { identity, host: "http://127.0.0.1:8080/" },
+    agentOptions: { identity, host: `http://${canisterId}.localhost:8000/` },
   });
   const greeting = await actor.greet();
 
